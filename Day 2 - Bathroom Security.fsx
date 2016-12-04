@@ -1,17 +1,28 @@
-let keypad =
+/// keypad layout - spaces represent non-keys, i.e. invalid coords
+let basicKeypad =
     array2D [|
-            [|1; 2; 3|]
-            [|4; 5; 6|]
-            [|7; 8; 9|]
+            [|'1'; '2'; '3'|]
+            [|'4'; '5'; '6'|]
+            [|'7'; '8'; '9'|]
             |]
 
-// starting position i.e. '5'
-let startPosition = (1,1)
+let diamondKeypad =
+    array2D [|
+            [|' '; ' '; '1'; ' '; ' ' |]
+            [|' '; '2'; '3'; '4'; ' ' |]
+            [|'5'; '6'; '7'; '8'; '9' |]
+            [|' '; 'A'; 'B'; 'C'; ' ' |]
+            [|' '; ' '; 'D'; ' '; ' ' |]
+            |]
+
+// starting positions i.e. '5'
+let startPosition1 = (1,1)
+let startPosition2 = (0,2)
 
 type Move = U | D | L | R
 
 (*
-    Input functions
+    Input data handling
 *)
 
 let getInput() =
@@ -31,12 +42,15 @@ let parseMove =
 
 *)
 
-/// the key number at a given position (top-left is 0,0)
-let keyAtPosition (x, y) =
+/// the key at a given position on a keypad (top-left is 0,0)
+let keyAtPosition (keypad:char[,]) (x, y) =
     try
-        Some keypad.[y, x]
+        match keypad.[y, x] with
+        | ' ' -> None
+        | c -> Some c
     with
     | :? System.IndexOutOfRangeException -> None
+
     
 /// coordinates after moving in a given direction
 let shift (x, y) move =
@@ -46,28 +60,29 @@ let shift (x, y) move =
     | L -> x-1, y
     | R -> x+1, y
 
+
 /// move from a key to an adjacent one, remaining if the move cannot be made
-let doMove from move =
+let doMove keypadMap from move =
     let newPosition = shift from move
-    match keyAtPosition newPosition with
+    match keypadMap newPosition with
     | None -> from
     | Some x -> newPosition 
 
 
 /// the final position after following a sequence of moves from a start position
-let followPath start moves =
+let followPath keypadMap start moves =
     moves
     |> Seq.map parseMove
-    |> Seq.fold doMove start
+    |> Seq.fold (doMove keypadMap) start
 
 
 /// get the keypad code
-let getCode moveSeqs =
+let getCode keypadMap firstKeyPos moveSeqs =
     let keyCollector start =
-        followPath start >> fun endPos -> keyAtPosition endPos, endPos
+        followPath keypadMap start >> fun endPos -> keypadMap endPos, endPos
 
     moveSeqs
-    |> Array.mapFold keyCollector startPosition
+    |> Array.mapFold keyCollector firstKeyPos
     |> fst
     |> Array.collect Option.toArray
 
@@ -75,23 +90,51 @@ let getCode moveSeqs =
     Runnables
 *)
 
-let test() =
-    let input = [|"ULL"; "RRDDD"; "LURDL"; "UUUUD"|]
-    let expected = [|1; 9; 8; 5|]
-    let result = getCode input
-    if result = expected then
-        printfn "Test passed"
-    else
-        printfn "Test failed\nExpected: %A\nGot:      %A" expected result
-
 let part1() =
+    let keypadMap = keyAtPosition basicKeypad
     getInput()
-    |> getCode
-    |> Seq.map (sprintf "%d")
+    |> getCode keypadMap startPosition1
+    |> Seq.map (sprintf "%c")
     |> String.concat ""
     |> printfn "Code is: %A"
 
+
+let part2() =
+    let keypadMap = keyAtPosition diamondKeypad
+    getInput()
+    |> getCode keypadMap startPosition2
+    |> Seq.map (sprintf "%c")
+    |> String.concat ""
+    |> printfn "Code is: %A"
+
+
+(*
+    Tests
+*)
+
+let runTest testId keypad startPos input expected =
+    let keypadMap = keyAtPosition keypad
+    let result = getCode keypadMap startPos input
+    if result = expected then
+        printfn "Test %A passed" testId
+    else
+        printfn "Test %A failed\nExpected: %A\nGot:      %A" testId expected result
+
+
+let part2Test() =
+    let input = [|"ULL"; "RRDDD"; "LURDL"; "UUUUD"|]
+    let expected = [|'5'; 'D'; 'B'; '3'|]
+    runTest 2 diamondKeypad startPosition2 input expected
     
+
+let part1Test() =
+    let input = [|"ULL"; "RRDDD"; "LURDL"; "UUUUD"|]
+    let expected = [|'1'; '9'; '8'; '5'|]
+    runTest 1 basicKeypad startPosition1 input expected
+
+
 part1()
-test()
+part2()
+part1Test()
+part2Test()
 1
