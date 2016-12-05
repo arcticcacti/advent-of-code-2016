@@ -1,6 +1,6 @@
 open System.Text.RegularExpressions
 
-type Room = { name: string; sectorId: string; checksum: string }
+type Room = { name: string; sectorId: int; checksum: string }
 
 let getInput() =
     let path = "input\day_4.txt"
@@ -12,7 +12,7 @@ let parseRoomData line =
     let pattern = "([\w-]+)-(\d+)\[(\w+)]" 
     let m = Regex.Match(line, pattern)
     let groups = [ for g in m.Groups -> g.Value ]
-    {name = groups.[1]; sectorId = groups.[2]; checksum = groups.[3]}
+    {name = groups.[1]; sectorId = int groups.[2]; checksum = groups.[3]}
 
 
 /// determine if a room is real by validating its name by its checksum
@@ -41,6 +41,23 @@ let isRealRoom room =
     |> Seq.forall (fun (a, b) -> a = b)
 
 
+/// rotate letters through the alphabet, wrapping from z to a
+let rec shift steps letter =
+    let nextChar = int >> (+) 1 >> char
+    match letter, steps with
+    |  c,  0 -> c
+    | 'z', n -> shift (n-1) 'a' 
+    |  c,  n -> shift (n-1) (nextChar c)
+
+
+/// decrypt a room name by applying a shift to each letter, and replacing dashes with spaces
+let decryptName name shiftSteps =
+    name
+    |> Seq.map (fun c -> if c = '-' then ' ' else shift shiftSteps c)
+    |> Array.ofSeq
+    |> fun x -> new System.String(x)
+
+
 (*
     Runnables
 *)
@@ -49,10 +66,20 @@ let part1() =
     getInput()
     |> Seq.map parseRoomData
     |> Seq.filter isRealRoom
-    |> Seq.sumBy (fun room -> int room.sectorId)
+    |> Seq.sumBy (fun room -> room.sectorId)
     |> printfn "Sector ID total: %d"
 
-let test() =
+
+let part2() =
+    getInput()
+    |> Seq.map parseRoomData
+    |> Seq.filter isRealRoom
+    |> Seq.map (fun room -> {room with name = (decryptName room.name room.sectorId)})
+    |> Seq.filter (fun room -> room.name.Contains "pole")
+    |> Seq.iter (fun room -> printfn "%s - %d" room.name room.sectorId)
+
+
+let test1() =
     let testInput = parseRoomData >> isRealRoom
     let testData = [|
         "aaaaa-bbb-z-y-x-123[abxyz]", true;
@@ -68,6 +95,20 @@ let test() =
 
     testData |> Array.iter showResults
 
+
+let test2() =
+    let testData = "qzmt-zixmtkozy-ivhz-343[whatever]"
+    let testRoom = parseRoomData testData
+    let result = decryptName testRoom.name testRoom.sectorId
+    let expected = "very encrypted name"
+    if result = expected then
+        printfn "Test 2 passed"
+    else
+        printfn "Test 2 failed - result %s" result
+
 part1()
-test()
+part2()
+
+test1()
+test2()
 
