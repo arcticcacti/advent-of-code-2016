@@ -1,6 +1,6 @@
-let getInput() =
-    let path = "input\day_3.txt"
-    System.IO.File.ReadAllLines path
+#load "AdventUtils.fsx"
+
+let getInput() = AdventUtils.inputFromFile "day_3.txt"
 
 
 /// parse a line into an int array
@@ -50,13 +50,14 @@ let part2() =
 
 
 let test1() =
+    let shouldBe = AdventUtils.printTestResult "1" (=)
     let input = "5 10 25"
-    let expected = false
     let result = parseInts input |> possibleTriangle
-    printfn "Test 1 %s" <| if result = expected then "passed" else "failed"
+    result |> shouldBe false
 
 
 let testTranspose() =
+    let shouldMatch = AdventUtils.printTestResult "transposing" (=)
     let input =
         [| [|101; 201; 301|];
            [|102; 202; 302|];
@@ -66,7 +67,7 @@ let testTranspose() =
            [|201; 202; 203|];
            [|301; 302; 303|] |]
     let result = input |> Seq.ofArray |> transposeToColumns |> Array.ofSeq
-    printfn "Transpose test %s" <| if result = expected then "passed" else "failed"
+    result |> shouldMatch expected
 
 
 part1()

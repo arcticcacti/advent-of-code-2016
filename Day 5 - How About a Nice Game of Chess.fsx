@@ -1,5 +1,6 @@
 open System.Security.Cryptography
 open System.Text
+#load "AdventUtils.fsx"
 
 let getInput() = "reyedfim"
 
@@ -82,25 +83,17 @@ let part2 input =
 (*
     Tests
 *)
-
-
-let printTestResult testId result expected =
-    if result = expected then
-        printfn "Test %A passed" testId
-    else
-        printfn "Test %A failed - got: %s" testId result
+let lowercase (s:string) = s.ToLower()
 
 let test1() =
-    let doorId = "abc"
-    let expected = "18f47a30"
-    let result = part1 doorId
-    printTestResult 1 (result.ToLower()) expected
+    let shouldMatch = AdventUtils.printTestResult 1 (=)
+    let result = part1 "abc" |> lowercase
+    result |> shouldMatch "18f47a30"
 
 let test2() =
-    let doorId = "abc"
-    let expected = "05ace8e3"
-    let result = part2 doorId
-    printTestResult 2 (result.ToLower()) expected
+    let shouldMatch = AdventUtils.printTestResult 2 (=)
+    let result = part2 "abc" |> lowercase
+    result |> shouldMatch "05ace8e3"
 
 
 

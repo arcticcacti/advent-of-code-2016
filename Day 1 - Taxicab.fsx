@@ -1,4 +1,4 @@
-
+#load "AdventUtils.fsx"
 
 type Dir  = N | E | S | W
 type Turn = L | R
@@ -9,9 +9,7 @@ type Move = Turn * int
       Input parsing
 *)
 
-let getInput =
-    let path = "input\day_1_taxicab.txt"
-    System.IO.File.ReadAllLines(path) |> Array.head
+let getInput = AdventUtils.inputFromFile "day_1_taxicab.txt" |> Array.head
 
 let splitSteps (input:string) =
     input.Split([|", "|], System.StringSplitOptions.None)

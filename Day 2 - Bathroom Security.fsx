@@ -1,3 +1,5 @@
+#load "AdventUtils.fsx"
+
 /// keypad layout - spaces represent non-keys, i.e. invalid coords
 let basicKeypad =
     array2D [|
@@ -25,9 +27,7 @@ type Move = U | D | L | R
     Input data handling
 *)
 
-let getInput() =
-    let path = "input/day_2_bathroom_security.txt"
-    System.IO.File.ReadAllLines(path)
+let getInput() = AdventUtils.inputFromFile "day_2_bathroom_security.txt"
 
 let parseMove =
     function
@@ -113,12 +113,10 @@ let part2() =
 *)
 
 let runTest testId keypad startPos input expected =
+    let shouldMatch = AdventUtils.printTestResult testId (=)
     let keypadMap = keyAtPosition keypad
     let result = getCode keypadMap startPos input
-    if result = expected then
-        printfn "Test %A passed" testId
-    else
-        printfn "Test %A failed\nExpected: %A\nGot:      %A" testId expected result
+    result |> shouldMatch expected
 
 
 let part2Test() =

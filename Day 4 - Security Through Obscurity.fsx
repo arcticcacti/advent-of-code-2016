@@ -1,10 +1,9 @@
 open System.Text.RegularExpressions
+#load "AdventUtils.fsx"
 
 type Room = { name: string; sectorId: int; checksum: string }
 
-let getInput() =
-    let path = "input\day_4.txt"
-    System.IO.File.ReadAllLines path
+let getInput() = AdventUtils.inputFromFile "day_4.txt"
 
 
 /// parse a line of data into a Room
@@ -80,31 +79,27 @@ let part2() =
 
 
 let test1() =
-    let testInput = parseRoomData >> isRealRoom
     let testData = [|
         "aaaaa-bbb-z-y-x-123[abxyz]", true;
         "a-b-c-d-e-f-g-h-987[abcde]", true;
         "not-a-real-room-404[oarel]", true;
         "totally-real-room-200[decoy]", false;
     |]
-    let showResults (name, expected) =
-        if testInput name = expected then
-            printfn "Test passed"
-        else
-            printfn "Test failed for input: %s" name
+    let runTest (name, expected) =
+        let result = name |> parseRoomData |> isRealRoom
+        let testId = sprintf "1 - %s" name
+        let shouldMatch = AdventUtils.printTestResult testId (=)
+        result |> shouldMatch expected
 
-    testData |> Array.iter showResults
+    testData |> Array.iter runTest
 
 
 let test2() =
+    let shouldMatch = AdventUtils.printTestResult 2 (=)
     let testData = "qzmt-zixmtkozy-ivhz-343[whatever]"
     let testRoom = parseRoomData testData
     let result = decryptName testRoom.name testRoom.sectorId
-    let expected = "very encrypted name"
-    if result = expected then
-        printfn "Test 2 passed"
-    else
-        printfn "Test 2 failed - result %s" result
+    result |> shouldMatch "very encrypted name"
 
 part1()
 part2()
