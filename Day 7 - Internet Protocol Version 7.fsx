@@ -20,26 +20,58 @@ let isAbba =
     | _ 
         -> false
 
+let isAba =
+    function
+    | a,b,c when a=c && a<>b
+        -> true
+    | _
+        -> false
 
-/// whether an input contains an ABBA sequence
-let hasAbba s =
-    s
-    |> Seq.windowed 4
-    |> Seq.map (fun a->a.[0], a.[1], a.[2], a.[3])
-    |> Seq.exists isAbba
+
+/// all ABBA sequences in a string
+let containedAbbas =
+    Seq.windowed 4
+    >> Seq.map (fun a->a.[0], a.[1], a.[2], a.[3])
+    >> Seq.filter isAbba
+
+
+/// all ABA sequences in a string
+let containedAbas =
+    Seq.windowed 3
+    >> Seq.map (fun a -> a.[0], a.[1], a.[2])
+    >> Seq.filter isAba
+
+
+/// flip an ABA into a BAB
+let abaToBab =
+    function
+    | (a,b,_) as t when t |> isAba
+        -> (b,a,b)
+    | t 
+        -> failwithf "Not an ABA: %A" t
 
 
 /// split a string into alternating 'normal' sections and sections that were enclosed in square brackets
-let splitIp (ip:string) = ip.Split([|'['; ']'|])
+let splitIp (ip:string) = ip.Split([|'['; ']'|]) |> groupAlternating
 
 
 /// determine if an IP string conforms to the rules for TLS support
 let supportsTls ip =
-    let normals, hypernets = ip |> splitIp |> groupAlternating
-    if hypernets |> Seq.exists hasAbba then
-        false
-    else normals |> Seq.exists hasAbba
+    let supernets, hypernets = ip |> splitIp
+    let hasAnAbba = Seq.exists (containedAbbas >> Seq.isEmpty >> not)
 
+    if hypernets |> hasAnAbba then false
+    else supernets |> hasAnAbba
+
+/// determine if an IP string conforms to the rules for SSL support
+let supportsSsl ip =
+    let supernets, hypernets = ip |> splitIp
+    let abas = supernets |> Seq.collect containedAbas
+    let potentialBabs = hypernets |> Seq.collect containedAbas
+
+    abas
+    |> Seq.map abaToBab
+    |> Seq.exists (fun x -> Seq.exists ((=) x) potentialBabs)
 
 //
 // Main functions
@@ -51,6 +83,12 @@ let part1() =
     |> Seq.length
     |> printfn "Part 1 - %d IPs support TLS"
 
+
+let part2() =
+    getInput()
+    |> Seq.filter supportsSsl
+    |> Seq.length
+    |> printfn "Part 2 - %d IPs support SSL"
 
 // Tests
 
@@ -64,7 +102,18 @@ let test1() =
     let test = AdventUtils.testResultIsExpected "1" supportsTls 
     testData |> Array.iter test
 
+let test2() =
+    let testData = [|
+        "aba[bab]xyz", true;
+        "xyx[xyx]xyx", false;
+        "aaa[kek]eke", true;
+        "zazbz[bzb]cdb", true
+    |]
+    let test = AdventUtils.testResultIsExpected "2" supportsSsl 
+    testData |> Array.iter test
 
 part1()
+part2()
 
 test1()
+test2()
