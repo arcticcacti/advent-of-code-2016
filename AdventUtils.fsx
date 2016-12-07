@@ -10,3 +10,8 @@ let printTestResult testId f expected result =
         printfn "Test (%A) passed" testId
     else
         printfn "Test (%A) failed\nExpected: %A\n Got: %A" testId expected result
+
+/// test f(input) = expected, adding the input to the testId in the output string
+let testResultIsExpected testId f (input, expected) =
+    let shouldBe = printTestResult (sprintf "%s - %A" testId input) (=)
+    f input |> shouldBe expected
